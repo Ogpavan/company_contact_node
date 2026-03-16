@@ -140,6 +140,13 @@ function extractWebsites(text) {
 }
 
 module.exports = async (req, res) => {
+  res.setHeader(\"Access-Control-Allow-Origin\", \"*\");
+  res.setHeader(\"Access-Control-Allow-Methods\", \"GET, OPTIONS\");
+  res.setHeader(\"Access-Control-Allow-Headers\", \"Content-Type, Authorization\");
+
+  if (req.method === \"OPTIONS\") {
+    return res.status(204).end();
+  }
   try {
     const qFromQuery = req.query && (req.query.q || req.query.company);
     const qFromUrl = new URL(req.url, "https://dummy.local").searchParams;
@@ -177,3 +184,4 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: String(err && err.message ? err.message : err) });
   }
 };
+

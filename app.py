@@ -1,8 +1,10 @@
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 
 from fetch_company_phone import build_url, extract_phones, extract_websites, run_curl
 
 app = Flask(__name__)
+CORS(app)
 
 
 @app.get("/api")
