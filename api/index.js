@@ -92,6 +92,53 @@ function extractPhones(text) {
   return found;
 }
 
+function extractWebsites(text) {
+  const variants = [
+    text,
+    text.replace(/\u003a/g, ":").replace(/\u0026/g, "&").replace(/\\//g, "/"),
+    safeDecodeURIComponent(text),
+    safeDecodeURIComponent(text)
+      .replace(/\u003a/g, ":")
+      .replace(/\u0026/g, "&")
+      .replace(/\\//g, "/"),
+  ];
+
+  const found = [];
+  const seen = new Set();
+  const urlPattern = /https?:\/\/[^\s"'<>]+/gi;
+  const blockedHosts = new Set([
+    "google.com",
+    "googleusercontent.com",
+    "gstatic.com",
+    "googleapis.com",
+    "doubleclick.net",
+  ]);
+
+  for (const variant of variants) {
+    let match;
+    while ((match = urlPattern.exec(variant)) !== null) {
+      let url = match[0].replace(/[).,;\]]+$/g, "");
+      // Clean trailing escape slashes/backslashes from payload artifacts.
+      url = url.replace(/[\\/]+$/g, "");
+      let host = "";
+      try {
+        host = new URL(url).hostname.toLowerCase();
+      } catch {
+        host = "";
+      }
+      if (host && [...blockedHosts].some((b) => host === b || host.endsWith(`.${b}`))) {
+        continue;
+      }
+      if (!seen.has(url)) {
+        seen.add(url);
+        found.push(url);
+      }
+    }
+  }
+
+  return found;
+}
+
 module.exports = async (req, res) => {
   try {
     const qFromQuery = req.query && (req.query.q || req.query.company);
@@ -119,9 +166,11 @@ module.exports = async (req, res) => {
     }
 
     const phones = extractPhones(responseText);
+    const websites = extractWebsites(responseText);
     return res.status(200).json({
       company,
       phones,
+      websites,
       count: phones.length,
     });
   } catch (err) {
