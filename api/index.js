@@ -95,12 +95,12 @@ function extractPhones(text) {
 function extractWebsites(text) {
   const variants = [
     text,
-    text.replace(/\u003a/g, ":").replace(/\u0026/g, "&").replace(/\\//g, "/"),
+    text.replace(/\\u003a/g, ":").replace(/\\u0026/g, "&").replace(/\\\//g, "/"),
     safeDecodeURIComponent(text),
     safeDecodeURIComponent(text)
-      .replace(/\u003a/g, ":")
-      .replace(/\u0026/g, "&")
-      .replace(/\\//g, "/"),
+      .replace(/\\u003a/g, ":")
+      .replace(/\\u0026/g, "&")
+      .replace(/\\\//g, "/"),
   ];
 
   const found = [];
