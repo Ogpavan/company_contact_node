@@ -69,6 +69,44 @@ def extract_phones(text: str):
     return found
 
 
+def extract_websites(text: str):
+    # Pull http/https URLs, then filter common non-website Google endpoints.
+    variants = [
+        text,
+        text.replace("\\u003a", ":").replace("\\u0026", "&").replace("\\/", "/"),
+        unquote(text),
+        unquote(text).replace("\\u003a", ":").replace("\\u0026", "&").replace("\\/", "/"),
+    ]
+
+    urls = []
+    seen = set()
+    url_pattern = re.compile(r"https?://[^\s\"'<>]+", re.IGNORECASE)
+    blocked_hosts = (
+        "google.com",
+        "googleusercontent.com",
+        "gstatic.com",
+        "googleapis.com",
+        "doubleclick.net",
+    )
+
+    for variant in variants:
+        for raw in url_pattern.findall(variant):
+            url = raw.rstrip(").,;]")
+            # Clean trailing escape slashes/backslashes from payload artifacts.
+            url = url.rstrip("\\/").rstrip("/")
+            try:
+                host = re.sub(r"^https?://", "", url).split("/", 1)[0].lower()
+            except Exception:
+                host = ""
+            if host and any(host.endswith(b) for b in blocked_hosts):
+                continue
+            if url not in seen:
+                seen.add(url)
+                urls.append(url)
+
+    return urls
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Search Google Maps payload for a company and extract phone number(s)."
